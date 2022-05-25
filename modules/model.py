@@ -49,12 +49,12 @@ class Vgg19(torch.nn.Module):
         return out
 
 
-class ImagePyramide(torch.nn.Module):
+class ImagePyramid(torch.nn.Module):
     """
-    Create image pyramide for computing pyramide perceptual loss. See Sec 3.3
+    Create image pyramid for computing pyramid perceptual loss. See Sec 3.3
     """
     def __init__(self, scales, num_channels):
-        super(ImagePyramide, self).__init__()
+        super(ImagePyramid, self).__init__()
         downs = {}
         for scale in scales:
             downs[str(scale).replace('.', '-')] = AntiAliasInterpolation2d(num_channels, scale)
@@ -90,7 +90,7 @@ class GeneratorFullModel(torch.nn.Module):
         self.train_params = train_params
         self.scales = train_params['scales']
 
-        self.pyramid = ImagePyramide(self.scales, inpainting_network.num_channels)
+        self.pyramid = ImagePyramid(self.scales, inpainting_network.num_channels)
         if torch.cuda.is_available():
             self.pyramid = self.pyramid.cuda()
 
@@ -111,10 +111,10 @@ class GeneratorFullModel(torch.nn.Module):
         kp_driving = self.kp_extractor(x['driving'])
         bg_param = None
         if self.bg_predictor:
-            if(epoch>=self.bg_start):
+            if epoch >= self.bg_start:
                 bg_param = self.bg_predictor(x['source'], x['driving'])
           
-        if(epoch>=self.dropout_epoch):
+        if epoch >= self.dropout_epoch:
             dropout_flag = False
             dropout_p = 0
         else:
@@ -123,22 +123,22 @@ class GeneratorFullModel(torch.nn.Module):
             dropout_p = min(epoch/self.dropout_inc_epoch * self.dropout_maxp + self.dropout_startp, self.dropout_maxp)
         
         dense_motion = self.dense_motion_network(source_image=x['source'], kp_driving=kp_driving,
-                                                    kp_source=kp_source, bg_param = bg_param, 
-                                                    dropout_flag = dropout_flag, dropout_p = dropout_p)
+                                                 kp_source=kp_source, bg_param=bg_param, 
+                                                 dropout_flag=dropout_flag, dropout_p=dropout_p)
         generated = self.inpainting_network(x['source'], dense_motion)
         generated.update({'kp_source': kp_source, 'kp_driving': kp_driving})
 
         loss_values = {}
 
-        pyramide_real = self.pyramid(x['driving'])
-        pyramide_generated = self.pyramid(generated['prediction'])
+        pyramid_real = self.pyramid(x['driving'])
+        pyramid_generated = self.pyramid(generated['prediction'])
 
         # reconstruction loss
         if sum(self.loss_weights['perceptual']) != 0:
             value_total = 0
             for scale in self.scales:
-                x_vgg = self.vgg(pyramide_generated['prediction_' + str(scale)])
-                y_vgg = self.vgg(pyramide_real['prediction_' + str(scale)])
+                x_vgg = self.vgg(pyramid_generated['prediction_' + str(scale)])
+                y_vgg = self.vgg(pyramid_real['prediction_' + str(scale)])
 
                 for i, weight in enumerate(self.loss_weights['perceptual']):
                     value = torch.abs(x_vgg[i] - y_vgg[i].detach()).mean()

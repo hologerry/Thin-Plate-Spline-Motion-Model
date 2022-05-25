@@ -2,13 +2,14 @@ from torch import nn
 import torch
 from torchvision import models
 
+
 class KPDetector(nn.Module):
     """
     Predict K*5 keypoints.
     """
 
     def __init__(self, num_tps, **kwargs):
-        super(KPDetector, self).__init__()
+        super().__init__()
         self.num_tps = num_tps
 
         self.fg_encoder = models.resnet18(pretrained=False)

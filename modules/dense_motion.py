@@ -1,9 +1,13 @@
-from torch import nn
-import torch.nn.functional as F
-import torch
-from modules.util import Hourglass, AntiAliasInterpolation2d, make_coordinate_grid, kp2gaussian
-from modules.util import to_homogeneous, from_homogeneous, UpBlock2d, TPS
 import math
+
+import torch
+import torch.nn.functional as F
+from torch import nn
+
+from modules.util import (TPS, AntiAliasInterpolation2d, Hourglass, UpBlock2d,
+                          from_homogeneous, kp2gaussian, make_coordinate_grid,
+                          to_homogeneous)
+
 
 class DenseMotionNetwork(nn.Module):
     """
@@ -12,7 +16,7 @@ class DenseMotionNetwork(nn.Module):
     """
 
     def __init__(self, block_expansion, num_blocks, max_features, num_tps, num_channels, 
-                 scale_factor=0.25, bg = False, multi_mask = True, kp_variance=0.01):
+                 scale_factor=0.25, bg=False, multi_mask=True, kp_variance=0.01):
         super(DenseMotionNetwork, self).__init__()
 
         if scale_factor != 1:
@@ -66,7 +70,7 @@ class DenseMotionNetwork(nn.Module):
         return heatmap
 
     def create_transformations(self, source_image, kp_driving, kp_source, bg_param):
-        # K TPS transformaions
+        # K TPS transformations
         bs, _, h, w = source_image.shape
         kp_1 = kp_driving['fg_kp']
         kp_2 = kp_source['fg_kp']
@@ -115,7 +119,7 @@ class DenseMotionNetwork(nn.Module):
         partition = X_exp.sum(dim=1, keepdim=True) + 1e-6
         return X_exp / partition  
 
-    def forward(self, source_image, kp_driving, kp_source, bg_param = None, dropout_flag=False, dropout_p = 0):
+    def forward(self, source_image, kp_driving, kp_source, bg_param=None, dropout_flag=False, dropout_p=0):
         if self.scale_factor != 1:
             source_image = self.down(source_image)
 
