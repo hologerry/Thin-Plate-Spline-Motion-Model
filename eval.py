@@ -149,7 +149,7 @@ def evaluate(eval_loader, inpainting, kp_detector, bg_predictor, dense_motion_ne
             fid_score = calculate_frechet_distance(mu1, sigma1, mu2, sigma2)
         except Exception:
             fid_score = 1000.0
-        print(f"MRAA results l1 {l1_avg_meter.avg} mse {mse_avg_meter.avg} ssim {ssim_avg_meter.avg} msssim {ms_ssim_avg_meter.avg} fid {fid_score}")
+        print(f"TPS results l1 {l1_avg_meter.avg} mse {mse_avg_meter.avg} ssim {ssim_avg_meter.avg} msssim {ms_ssim_avg_meter.avg} fid {fid_score}")
 
     return
 
